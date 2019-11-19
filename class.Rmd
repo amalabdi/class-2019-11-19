@@ -25,7 +25,7 @@ download.file("https://github.com/TheUpshot/2018-live-poll-results/archive/maste
 
 raw <- fs::dir_ls("2018-live-poll-results-master/data/")
  
- row <- map_dfr(tbl, read_csv,
+row <- map_dfr(raw, read_csv,
                                   col_types = cols(
                                     .default = col_character(),
                                     turnout_scale = col_double(),
@@ -36,7 +36,7 @@ raw <- fs::dir_ls("2018-live-poll-results-master/data/")
                                     timestamp = col_datetime(format = "")
                                   ),
                 .id = "source")
-fs::file_delete("master.zip", "2018-live-poll-results-master/")
+file_delete(c("master.zip", "2018-live-poll-results-master"))
  # added .id so we know where the data comes from
  # Skim function to view data
 ```
@@ -53,8 +53,15 @@ x <- row %>%
 
 # Work on a model that connects gender to dvote
 
-lm(dvote ~ female, data = x)
+model <- glm(dvote ~ female, data = x, family = "binomial")
+```
 
-glm(dvote ~ female, data = x, family = "binomial")
+```{r}
+new_data <- tibble(female = c(0,1))
+
+predict(model, new_data, type = "response")
+
+x <- x %>%
+  mutate(prediction = predict(model,., type = "response"))
 ```
 
