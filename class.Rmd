@@ -1,0 +1,60 @@
+---
+title: "Class"
+author: "Amal Abdi"
+date: "11/19/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fs)
+library(skimr)
+library(tidyverse)
+```
+
+```{r}
+download.file("https://github.com/TheUpshot/2018-live-poll-results/archive/master.zip", destfile = "master.zip")
+```
+
+```{r, cache = TRUE}
+ unzip("master.zip")
+
+# But I want to read in all of the files
+# col_types argument copied and pasted from warning message
+# when I ran the function without the argument
+
+raw <- fs::dir_ls("2018-live-poll-results-master/data/")
+ 
+ row <- map_dfr(tbl, read_csv,
+                                  col_types = cols(
+                                    .default = col_character(),
+                                    turnout_scale = col_double(),
+                                    turnout_score = col_double(),
+                                    w_LV = col_double(),
+                                    w_RV = col_double(),
+                                    final_weight = col_double(),
+                                    timestamp = col_datetime(format = "")
+                                  ),
+                .id = "source")
+fs::file_delete("master.zip", "2018-live-poll-results-master/")
+ # added .id so we know where the data comes from
+ # Skim function to view data
+```
+
+
+```{r}
+# Create a 0/1 variable for Democratic vote
+# Create a 0/1 vote variable for female
+
+x <- row %>% 
+  mutate(dvote = if_else(response == "Dem", 1, 0)) %>% 
+  mutate(female = if_else(gender == "Female", 1, 0)) %>% 
+  select(dvote, female, response, gender)
+
+# Work on a model that connects gender to dvote
+
+lm(dvote ~ female, data = x)
+
+glm(dvote ~ female, data = x, family = "binomial")
+```
+
